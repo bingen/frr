@@ -31,6 +31,9 @@
 #include "zclient.h"
 
 #include "zebra/zebra_ns.h"
+#include "zebra_pw.h"
+#include "zebra_ext_man.h"
+
 /* Default port information. */
 #define ZEBRA_VTY_PORT                2601
 
@@ -133,6 +136,12 @@ struct zebra_t
 
   /* LSP work queue */
   struct work_queue *lsp_process_q;
+
+  /* PseudoWire work queue */
+  struct work_queue *pwq;
+
+  /* Communication with an external manager */
+  struct external_manager_t ext_man;
 };
 extern struct zebra_t zebrad;
 extern unsigned int multipath_num;
@@ -170,6 +179,8 @@ extern int zsend_interface_vrf_update (struct zserv *, struct interface *,
                                        vrf_id_t);
 
 extern int zsend_interface_link_params (struct zserv *, struct interface *);
+extern int zsend_pw_update (int cmd, struct zserv *client, struct zebra_pw_t *pw,
+                 u_short status, vrf_id_t vrf_id);
 
 extern pid_t pid;
 

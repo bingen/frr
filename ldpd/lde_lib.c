@@ -306,6 +306,19 @@ fec_nh_del(struct fec_nh *fnh)
 }
 
 void
+update_local_label (struct fec_node *fn, int connected)
+{
+	struct lde_nbr		*ln;
+
+	fn->local_label = lde_assign_label(&fn->fec, connected);
+
+	/* FEC.1: perform lsr label distribution procedure */
+	RB_FOREACH(ln, nbr_tree, &lde_nbrs)
+		lde_send_labelmapping(ln, fn, 1);
+
+}
+
+void
 lde_kernel_insert(struct fec *fec, int af, union ldpd_addr *nexthop,
     ifindex_t ifindex, uint8_t priority, int connected, void *data)
 {
@@ -416,6 +429,9 @@ lde_kernel_update(struct fec *fec)
 				lde_check_mapping(&me->map, ln);
 		}
 	}
+	if ((fn->local_label <= MPLS_LABEL_RESERVED_MAX && !connected) ||
+	    (fn->local_label > MPLS_LABEL_RESERVED_MAX && connected))
+		update_local_label (fn, connected);
 }
 
 void

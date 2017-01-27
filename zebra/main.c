@@ -49,6 +49,10 @@
 #include "zebra/redistribute.h"
 #include "zebra/zebra_mpls.h"
 
+#if defined(HAVE_VOLTA)
+#include "zebra_volta.h"
+#endif /* HAVE_VOLTA */
+
 #define ZEBRA_PTM_SUPPORT
 
 /* Zebra instance */
@@ -419,6 +423,7 @@ main (int argc, char **argv)
 
   zebra_mpls_init ();
   zebra_mpls_vty_init ();
+  zebra_pw_init ();
 
   /* For debug purpose. */
   /* SET_FLAG (zebra_debug_event, ZEBRA_DEBUG_EVENT); */

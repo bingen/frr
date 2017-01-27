@@ -351,6 +351,10 @@ if test "${enable_cumulus}" = "yes" ; then
   AC_DEFINE(HAVE_CUMULUS,,Compile Special Cumulus Code in)
 fi
 
+if test "${enable_volta}" = "yes" ; then
+   AC_DEFINE(HAVE_VOLTA,,Compile Special Volta Code in)
+fi
+
 if test "${enable_shell_access}" = "yes"; then
    AC_DEFINE(HAVE_SHELL_ACCESS,,Allow user to use ssh/telnet/bash)
 fi

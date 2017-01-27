@@ -384,6 +384,31 @@ lde_dispatch_imsg(struct thread *thread)
 	return (0);
 }
 
+/**
+ * Wrapper for sync PWs function.
+ *
+ * It's used to call the function with a timer after a failure
+ * on sending a PW, to retry after RETRY_SYNC_PW_INTERVAL
+ *
+ * The signature is the one required by thread interface.
+ */
+static int l2vpn_sync_pws_wrapper (struct thread *thread)
+{
+	struct kpw *kpw;
+
+	kpw = THREAD_ARG (thread);
+	if (!kpw) {
+		log_warnx("%s: Unable to retrieve kpw on scheduled sync PW", __func__);
+		return 1;
+	}
+
+	l2vpn_sync_pws (kpw->af, &kpw->nexthop);
+
+	free (kpw);
+
+	return 0;
+}
+
 /* ARGSUSED */
 static int
 lde_dispatch_parent(struct thread *thread)
@@ -403,6 +428,7 @@ lde_dispatch_parent(struct thread *thread)
 	ssize_t			 n;
 	int			 shut = 0;
 	struct fec		 fec;
+	struct kpw		 *kpw; /* for PW status update */
 
 	iev->ev_read = NULL;
 
@@ -559,6 +585,17 @@ lde_dispatch_parent(struct thread *thread)
 			}
 			memcpy(&ldp_debug, imsg.data, sizeof(ldp_debug));
 			break;
+		case IMSG_PW_UPDATE:
+			if ((kpw = malloc(sizeof(struct kpw))) == NULL)
+				fatal("Error allocating kpw after PW status update");
+			memcpy (kpw, imsg.data, sizeof (struct kpw));
+			if (l2vpn_pw_status_update (kpw) == 0) {
+				thread_add_timer (master, l2vpn_sync_pws_wrapper,
+						kpw, RETRY_SYNC_PW_INTERVAL);
+			} else {
+				free (kpw);
+			}
+			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -713,13 +750,18 @@ lde_send_change_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		pw->flags |= F_PW_STATUS_UP;
 
 		memset(&kpw, 0, sizeof(kpw));
+		strncpy (kpw.ifname, pw->ifname, IF_NAMESIZE);
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
+		kpw.lsr_id = pw->lsr_id;
 		kpw.af = pw->af;
 		kpw.nexthop = pw->addr;
 		kpw.local_label = fn->local_label;
 		kpw.remote_label = fnh->remote_label;
 		kpw.flags = pw->flags;
+		kpw.pwid = pw->pwid;
+		strncpy (kpw.vpn_name, pw->l2vpn->name, L2VPN_NAME_LEN);
+		kpw.ac_port_ifindex = 0; // TODO: LIST_FIRST(&pw->l2vpn->if_list)->ifindex;
 
 		lde_imsg_compose_parent(IMSG_KPWLABEL_CHANGE, 0, &kpw,
 		    sizeof(kpw));
@@ -778,13 +820,18 @@ lde_send_delete_klabel(struct fec_node *fn, struct fec_nh *fnh)
 		pw->flags &= ~F_PW_STATUS_UP;
 
 		memset(&kpw, 0, sizeof(kpw));
+		strncpy (kpw.ifname, pw->ifname, IF_NAMESIZE);
 		kpw.ifindex = pw->ifindex;
 		kpw.pw_type = fn->fec.u.pwid.type;
+		kpw.lsr_id = pw->lsr_id;
 		kpw.af = pw->af;
 		kpw.nexthop = pw->addr;
 		kpw.local_label = fn->local_label;
 		kpw.remote_label = fnh->remote_label;
 		kpw.flags = pw->flags;
+		kpw.pwid = pw->pwid;
+		strncpy (kpw.vpn_name, pw->l2vpn->name, L2VPN_NAME_LEN);
+		kpw.ac_port_ifindex = 0; //TODO: LIST_FIRST(&pw->l2vpn->if_list)->ifindex;
 
 		lde_imsg_compose_parent(IMSG_KPWLABEL_DELETE, 0, &kpw,
 		    sizeof(kpw));

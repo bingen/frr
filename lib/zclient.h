@@ -161,6 +161,7 @@ struct zclient
   int (*redistribute_route_ipv4_del) (int, struct zclient *, uint16_t, vrf_id_t);
   int (*redistribute_route_ipv6_add) (int, struct zclient *, uint16_t, vrf_id_t);
   int (*redistribute_route_ipv6_del) (int, struct zclient *, uint16_t, vrf_id_t);
+  int (*pw_status_update) (int, struct zclient *, uint16_t, vrf_id_t);
 };
 
 /* Zebra API message flag. */
