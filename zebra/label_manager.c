@@ -152,7 +152,7 @@ int zread_relay_label_manager_request(int cmd, struct zserv *zserv)
 	return relay_response_back(zserv);
 }
 
-static int zclient_connect(struct thread *t)
+static int lm_zclient_connect(struct thread *t)
 {
 	zclient->t_connect = NULL;
 
@@ -162,7 +162,7 @@ static int zclient_connect(struct thread *t)
 	if (zclient_socket_connect(zclient) < 0) {
 		zlog_err("Error connecting synchronous zclient!");
 		THREAD_TIMER_ON(zebrad.master, zclient->t_connect,
-						zclient_connect,
+						lm_zclient_connect,
 						zclient, CONNECTION_DELAY);
 		return -1;
 	}
@@ -186,7 +186,7 @@ static void lm_zclient_init(char *lm_zserv_path)
 	zclient = zclient_new(zebrad.master);
 	zclient->sock = -1;
 	zclient->t_connect = NULL;
-	zclient_connect (NULL);
+	lm_zclient_connect (NULL);
 	/* make socket non-blocking */
 	if (set_nonblocking(zclient->sock) < 0)
 		zlog_warn("%s: set_nonblocking(%d) failed", __func__, zclient->sock);
