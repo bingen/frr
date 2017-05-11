@@ -167,6 +167,10 @@ static int lm_zclient_connect(struct thread *t)
 		return -1;
 	}
 
+	/* make socket non-blocking */
+	if (set_nonblocking(zclient->sock) < 0)
+		zlog_warn("%s: set_nonblocking(%d) failed", __func__, zclient->sock);
+
 	return 0;
 }
 
@@ -187,9 +191,6 @@ static void lm_zclient_init(char *lm_zserv_path)
 	zclient->sock = -1;
 	zclient->t_connect = NULL;
 	lm_zclient_connect (NULL);
-	/* make socket non-blocking */
-	if (set_nonblocking(zclient->sock) < 0)
-		zlog_warn("%s: set_nonblocking(%d) failed", __func__, zclient->sock);
 }
 
 /**
