@@ -188,9 +188,8 @@ static void lm_zclient_init(char *lm_zserv_path)
 	zclient->t_connect = NULL;
 	zclient_connect (NULL);
 	/* make socket non-blocking */
-	flags = fcntl(zclient->sock, F_GETFL);
-	flags |= O_NONBLOCK;
-	fcntl(zclient->sock, F_SETFL, flags);
+	if (set_nonblocking(zclient->sock) < 0)
+		zlog_warn("%s: set_nonblocking(%d) failed", __func__, zclient->sock);
 }
 
 /**
