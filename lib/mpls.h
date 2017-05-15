@@ -88,6 +88,20 @@ enum lsp_types_t
   ZEBRA_LSP_LDP = 2          /* LDP LSP. */
 };
 
+/* pseudowire types */
+enum pw_types_t
+{
+  PSEUDOWIRE_TYPE_ETH,
+  PSEUDOWIRE_TYPE_ETH_TAGGED
+};
+
+/* pseudowire flags */
+#define F_PSEUDOWIRE_CWORD	0x01
+
+/* pseudowire status */
+#define PSEUDOWIRE_STATUS_DOWN	0
+#define PSEUDOWIRE_STATUS_UP	1
+
 /* Functions for basic label operations. */
 
 /* Encode a label stack entry from fields; convert to network byte-order as

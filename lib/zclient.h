@@ -94,6 +94,9 @@ typedef enum {
   ZEBRA_LABEL_MANAGER_CONNECT,
   ZEBRA_GET_LABEL_CHUNK,
   ZEBRA_RELEASE_LABEL_CHUNK,
+  ZEBRA_PW_ADD,
+  ZEBRA_PW_DELETE,
+  ZEBRA_PW_STATUS_UPDATE,
 } zebra_message_types_t;
 
 struct redist_proto
@@ -164,6 +167,7 @@ struct zclient
   int (*redistribute_route_ipv4_del) (int, struct zclient *, uint16_t, vrf_id_t);
   int (*redistribute_route_ipv6_add) (int, struct zclient *, uint16_t, vrf_id_t);
   int (*redistribute_route_ipv6_del) (int, struct zclient *, uint16_t, vrf_id_t);
+  int (*pw_status_update) (int, struct zclient *, uint16_t, vrf_id_t);
 };
 
 /* Zebra API message flag. */
@@ -215,6 +219,16 @@ struct zapi_ipv4
   u_int32_t mtu;
 
   vrf_id_t vrf_id;
+};
+
+#define L2VPN_NAME_LEN 32 /* must be synced with the one in ldpd/ldpd.h */
+union pw_protocol_fields {
+  struct ldp_fields {
+    struct in_addr lsr_id;
+    uint32_t pwid;
+    char vpn_name[L2VPN_NAME_LEN];
+  } ldp;
+  /* TODO: BGP */
 };
 
 /* Prototypes of zebra client service functions. */
